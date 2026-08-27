@@ -505,5 +505,365 @@
       to { opacity: 1; transform: scale(1); }
     }
 
-    /*
+    /* RESPONSIVENESS */
+    @media (max-width: 600px) {
+      .card-panel {
+        padding: 20px;
+      }
+      .photo-card {
+        flex: 0 0 230px;
+        height: 280px;
+      }
+    }
+  </style>
+</head>
+<body>
 
+  <canvas id="particle-canvas"></canvas>
+
+  <div class="container">
+    <header>
+      <div class="badge">A Golden Farewell Tribute</div>
+      <h1 class="hero-title">Thank You, Saket!</h1>
+      <p class="hero-subtitle">
+        Celebrating your inspiring leadership, guidance, and the unforgettable milestones we’ve shared. Here's to your next great chapter!
+      </p>
+    </header>
+
+    <section id="gallery-section">
+      <div class="section-header">
+        <h2 class="section-title">Cherished Memories</h2>
+      </div>
+
+      <div class="card-panel">
+        <label class="upload-area" for="photo-input">
+          <svg class="upload-icon" viewBox="0 0 24 24">
+            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+          </svg>
+          <strong style="color: var(--gold-dark); font-size: 1.05rem;">Click to Upload Team Moments</strong>
+          <span style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Supports PNG, JPG, JPEG (Select multiple photos)</span>
+        </label>
+        <input type="file" id="photo-input" class="file-input" accept="image/*" multiple />
+
+        <div class="gallery-container">
+          <div class="gallery-scroll-wrapper" id="gallery-wrapper">
+            </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="messages-section">
+      <div class="section-header">
+        <h2 class="section-title">Wishes & Farewells</h2>
+      </div>
+
+      <div class="card-panel message-form-wrapper">
+        <form id="wish-form">
+          <div class="form-group">
+            <label for="user-name">Your Name</label>
+            <input type="text" id="user-name" class="form-control" placeholder="e.g. Priyanshu Sharma" required />
+          </div>
+          <div class="form-group">
+            <label for="user-message">Your Message for Saket</label>
+            <textarea id="user-message" class="form-control" placeholder="Share a favorite memory, tribute, or warm wish..." required></textarea>
+          </div>
+          <div style="text-align: right;">
+            <button type="submit" class="btn-gold">
+              <span>Post Your Wish</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="messages-grid" id="messages-container">
+        </div>
+    </section>
+
+    <footer>
+      <div class="thank-you-box">
+        <div class="sparkle-icon">✦</div>
+        <h2 class="animated-thankyou">Thank You, Saket!</h2>
+        <p class="thankyou-sub">
+          "A truly great manager is hard to find, difficult to part with, and impossible to forget."<br />
+          <strong>Wishing you endless success & joy ahead!</strong>
+        </p>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    /* =================================================================
+       1. CANVAS GOLD SHIMMER / FLOATING DUST PARTICLES ANIMATION
+    ================================================================= */
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    let width, height;
+
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.size = Math.random() * 2.5 + 0.8;
+        this.speedY = Math.random() * 0.6 + 0.2;
+        this.speedX = (Math.random() - 0.5) * 0.4;
+        this.opacity = Math.random() * 0.6 + 0.2;
+        this.color = Math.random() > 0.4 ? '#d4af37' : '#f6e6b4';
+      }
+
+      update() {
+        this.y -= this.speedY;
+        this.x += this.speedX;
+
+        // Reset to bottom once it floats off top
+        if (this.y < 0) {
+          this.y = height + 10;
+          this.x = Math.random() * width;
+        }
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.opacity;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#d4af37';
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function initParticles() {
+      resizeCanvas();
+      particles = [];
+      const particleCount = Math.min(Math.floor(window.innerWidth / 18), 55);
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, width, height);
+      particles.forEach((p) => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animateParticles);
+    }
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+    });
+
+    initParticles();
+    animateParticles();
+
+    /* =================================================================
+       2. PHOTO GALLERY (UPLOAD, DISPLAY IN SCROLL, DELETE)
+    ================================================================= */
+    const photoInput = document.getElementById('photo-input');
+    const galleryWrapper = document.getElementById('gallery-wrapper');
+
+    // Initial Starter Photos (Unsplash aesthetic gold/team memories placeholders)
+    let photos = JSON.parse(localStorage.getItem('saket_farewell_photos')) || [
+      { id: '1', url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=700&q=80' },
+      { id: '2', url: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=700&q=80' },
+      { id: '3', url: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=700&q=80' },
+      { id: '4', url: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=700&q=80' }
+    ];
+
+    function savePhotos() {
+      try {
+        localStorage.setItem('saket_farewell_photos', JSON.stringify(photos));
+      } catch (e) {
+        console.warn('Storage limit reached for Base64 images.');
+      }
+    }
+
+    function renderGallery() {
+      galleryWrapper.innerHTML = '';
+
+      if (photos.length === 0) {
+        galleryWrapper.innerHTML = '<div class="empty-placeholder">No photos uploaded yet. Be the first to share a memory with Saket!</div>';
+        return;
+      }
+
+      photos.forEach((item) => {
+        const card = document.createElement('div');
+        card.className = 'photo-card';
+        card.innerHTML = `
+          <img src="${item.url}" alt="Farewell Memory" loading="lazy" />
+          <button class="photo-delete-btn" title="Delete Photo" onclick="deletePhoto('${item.id}')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </button>
+        `;
+        galleryWrapper.appendChild(card);
+      });
+    }
+
+    // Handle Upload
+    photoInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          photos.unshift({
+            id: Date.now() + Math.random().toString(),
+            url: event.target.result
+          });
+          savePhotos();
+          renderGallery();
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Clear input value so same files can be re-uploaded if desired
+      photoInput.value = '';
+    });
+
+    // Delete Photo function
+    window.deletePhoto = function(id) {
+      photos = photos.filter(p => p.id !== id);
+      savePhotos();
+      renderGallery();
+    };
+
+    renderGallery();
+
+    /* =================================================================
+       3. MESSAGE BOARD (ADD MESSAGE, DELETE MESSAGE, DATE STAMPS)
+    ================================================================= */
+    const wishForm = document.getElementById('wish-form');
+    const userNameInput = document.getElementById('user-name');
+    const userMessageInput = document.getElementById('user-message');
+    const messagesContainer = document.getElementById('messages-container');
+
+    // Default starter warm wishes
+    let messages = JSON.parse(localStorage.getItem('saket_farewell_messages')) || [
+      {
+        id: '1',
+        name: 'Anita Roy',
+        message: 'Saket, you set the benchmark for calm, visionary leadership. Thank you for always having our backs and championing our ideas!',
+        date: 'Today'
+      },
+      {
+        id: '2',
+        name: 'Rohan Verma',
+        message: 'From sprint reviews to coffee table strategies, working alongside you has been a masterclass. Wishing you huge wins in your next role!',
+        date: 'Yesterday'
+      },
+      {
+        id: '3',
+        name: 'Deepika Sen',
+        message: 'Your energy and positivity will be immensely missed across the team. Best of luck on your new adventure, Saket!',
+        date: '2 days ago'
+      }
+    ];
+
+    function saveMessages() {
+      localStorage.setItem('saket_farewell_messages', JSON.stringify(messages));
+    }
+
+    function renderMessages() {
+      messagesContainer.innerHTML = '';
+
+      if (messages.length === 0) {
+        messagesContainer.innerHTML = '<div class="empty-placeholder" style="grid-column: 1/-1;">No messages yet. Send your warmest wishes to Saket above!</div>';
+        return;
+      }
+
+      messages.forEach((msg) => {
+        const initial = msg.name.trim().charAt(0).toUpperCase() || '★';
+        const card = document.createElement('div');
+        card.className = 'message-card';
+        card.innerHTML = `
+          <div>
+            <div class="message-header">
+              <div class="avatar">${initial}</div>
+              <div class="author-info">
+                <h4>${escapeHTML(msg.name)}</h4>
+                <span>${escapeHTML(msg.date)}</span>
+              </div>
+            </div>
+            <p class="message-body">${escapeHTML(msg.message)}</p>
+          </div>
+          <div class="message-footer">
+            <button class="btn-delete-msg" onclick="deleteMessage('${msg.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+              </svg>
+              Delete
+            </button>
+          </div>
+        `;
+        messagesContainer.appendChild(card);
+      });
+    }
+
+    // Add New Wish
+    wishForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = userNameInput.value.trim();
+      const message = userMessageInput.value.trim();
+
+      if (!name || !message) return;
+
+      const now = new Date();
+      const timeString = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+      messages.unshift({
+        id: Date.now().toString(),
+        name: name,
+        message: message,
+        date: timeString
+      });
+
+      saveMessages();
+      renderMessages();
+
+      // Reset fields
+      userNameInput.value = '';
+      userMessageInput.value = '';
+    });
+
+    // Delete Message
+    window.deleteMessage = function(id) {
+      messages = messages.filter(m => m.id !== id);
+      saveMessages();
+      renderMessages();
+    };
+
+    // Helper to prevent XSS injection
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;'
+        }[tag] || tag)
+      );
+    }
+
+    renderMessages();
+  </script>
+</body>
+</html>
